@@ -11,93 +11,90 @@ import sqlite3
 conn = sqlite3.connect("restaurant.db")
 cursor = conn.cursor()
 
-# -------------------- EMPLOYEE TABLE --------------------
-def createTableEmployee():
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS employee (
-        employee_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        phone TEXT UNIQUE,
-        gender TEXT,
-        designation TEXT,
-        salary INTEGER,
-        dob DATE,
-        address TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+# ---------------- DROP TABLES (SAFE RESET) ----------------
+cursor.execute("DROP TABLE IF EXISTS order_items")
+cursor.execute("DROP TABLE IF EXISTS orders")
+cursor.execute("DROP TABLE IF EXISTS inventory")
+cursor.execute("DROP TABLE IF EXISTS menu")
+cursor.execute("DROP TABLE IF EXISTS customer")
+cursor.execute("DROP TABLE IF EXISTS employee")
+# ---------------- CREATE TABLES ----------------
 
-# -------------------- CUSTOMER TABLE --------------------
-def createTableCustomer():
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS customer (
-        customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        phone TEXT UNIQUE,
-        gender TEXT,
-        date_of_registration DATE DEFAULT CURRENT_DATE
-    )
-    """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS employee (
+    employee_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    phone TEXT UNIQUE,
+    role TEXT,
+    password TEXT
+)
+""")
 
-# -------------------- MENU TABLE --------------------
-def createTableMenu():
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS menu (
-        menu_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        item_name TEXT NOT NULL,
-        price REAL NOT NULL,
-        category TEXT,
-        availability TEXT CHECK(availability IN ('Yes','No')) DEFAULT 'Yes'
-    )
-    """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS customer (
+    customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    phone TEXT UNIQUE,
+    password TEXT
+)
+""")
 
-# -------------------- ORDERS TABLE --------------------
-def createTableOrders():
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS orders (
-        order_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        customer_id INTEGER,
-        employee_id INTEGER,
-        order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-        status TEXT CHECK(status IN ('Placed','Preparing','Served','Cancelled')) DEFAULT 'Placed',
-        FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
-        FOREIGN KEY (employee_id) REFERENCES employee(employee_id)
-    )
-    """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS menu (
+    menu_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_name TEXT,
+    price REAL,
+    ingredients TEXT
+)
+""")
 
-# -------------------- ORDER ITEMS TABLE --------------------
-def createTableOrderItems():
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS order_items (
-        order_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id INTEGER,
-        menu_id INTEGER,
-        quantity INTEGER NOT NULL,
-        FOREIGN KEY (order_id) REFERENCES orders(order_id),
-        FOREIGN KEY (menu_id) REFERENCES menu(menu_id)
-    )
-    """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS inventory (
+    ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ingredient_name TEXT UNIQUE,
+    quantity INTEGER,
+    unit TEXT
+)
+""")
 
-# -------------------- INVENTORY TABLE --------------------
-def createTableInventory():
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS inventory (
-        ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ingredient_name TEXT NOT NULL,
-        quantity INTEGER NOT NULL,
-        unit TEXT,
-        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS orders (
+    order_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER,
+    status TEXT DEFAULT 'Placed'
+)
+""")
 
-# -------------------- CREATE ALL TABLES --------------------
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS order_items (
+    order_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER,
+    menu_id INTEGER,
+    quantity INTEGER
+)
+""")
 
-createTableEmployee()
-createTableCustomer()
-createTableMenu()
-createTableOrders()
-createTableOrderItems()
-createTableInventory()
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS billing (
+    bill_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER,
+    total_amount REAL,
+    bill_date DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS payment (
+    payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bill_id INTEGER,
+    payment_mode TEXT,
+    payment_status TEXT,
+    payment_date DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+""")
+
 
 conn.commit()
 conn.close()
+
+print("✅ Tables created successfully")
